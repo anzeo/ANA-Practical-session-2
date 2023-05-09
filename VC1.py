@@ -107,6 +107,17 @@ def vc_greedy_approach(G):
     return C
 
 
+def vc_2apx_approach(G):
+    C = set()
+
+    uncovered_edges = set(G.edges)
+
+    while uncovered_edges:
+        (u, v) = uncovered_edges.pop()
+        if u not in C and v not in C:
+            C.add(u)
+            C.add(v)
+
     return C
 
 
@@ -123,7 +134,8 @@ if __name__ == '__main__':
             a = nx.maximal_matching(G)
             naive = vc_naive_approach(G)
             greedy = vc_greedy_approach(G)
-            print(filename, " ", str(len(naive)), str(len(greedy)))
+            apx2 = vc_2apx_approach(G)
+            print(filename, " ", str(len(naive)), str(len(greedy)), str(len(apx2)))
         # break
     end = time.time()
     print(end - start)
@@ -152,5 +164,5 @@ if __name__ == '__main__':
     # f.close()
     # print(vc_naive_approach(G))
     # print((vc_greedy_approach(G)))
-
+    # print((vc_2apx_approach(G)))
     # print(G.edges)
