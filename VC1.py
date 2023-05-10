@@ -2,6 +2,9 @@ import os
 import time
 
 import networkx as nx
+import numpy as np
+from scipy.optimize import linprog
+from scipy.sparse import csr_matrix
 
 """
 vsi stirje algoritmi bi morali za 20 grafov tect nekje 2min
@@ -19,16 +22,6 @@ def vc_naive_approach(G):
         if u not in C and v not in C:
             C.add(u)
 
-        # A je to optimalno delat?
-        # for adjacent_edge in list(tmp_G.edges(u)):
-        #     # print(adjacent_edge)
-        #     (au, av) = adjacent_edge
-        #     if (au, av) in uncovered_edges:
-        #         uncovered_edges.remove((au, av))
-        #     if (av, au) in uncovered_edges:
-        #         uncovered_edges.remove((av, au))
-        #     tmp_G.remove_edge(au, av)
-        # print()
     return C
 
 
@@ -134,10 +127,10 @@ def vc_lp_approach(G):
     b_vector = []
     c_vector = []
 
-    total_time = 0.0
+    # total_time = 0.0
 
     while uncovered_edges:
-        start = time.time()
+        # start = time.time()
 
         (u, v) = uncovered_edges.pop()
 
@@ -148,11 +141,11 @@ def vc_lp_approach(G):
         indptr.append(indptr_count)
         b_vector.append(-1)
 
-        end = time.time()
-        total_time += (end - start)
+        # end = time.time()
+        # total_time += (end - start)
 
     for vertex in G.nodes:
-        start = time.time()
+        # start = time.time()
 
         # x >= 0
         data.append(-1)
@@ -164,78 +157,71 @@ def vc_lp_approach(G):
         # min: x_1 + x_2 +...+ x_n
         c_vector.append(1)
 
-        end = time.time()
-        total_time += (end - start)
+        # end = time.time()
+        # total_time += (end - start)
 
     # print("Matrix generate time", total_time)
 
-    # print(csr_matrix((data, indices, indptr)).toarray())
-    start = time.time()
+    # start = time.time()
     A = csr_matrix((data, indices, indptr)).toarray()
     b = np.array(b_vector)
     c = np.array(c_vector)
-    end = time.time()
-    total_time = (end - start)
+    # end = time.time()
+    # total_time = (end - start)
     # print("np arrays time", total_time)
 
     # print(A)
     # print(b)
     # print(c)
     # print()
-    start = time.time()
+    # start = time.time()
     res = linprog(c, A_ub=A, b_ub=b)
-    end = time.time()
-    total_time += (end - start)
+    # end = time.time()
+    # total_time = (end - start)
     # print("LP time", total_time)
     # print('Optimal value:', res.fun,
     #       '\nx values:', res.x,
     #       '\nNumber of iterations performed:', res.nit,
     #       '\nStatus:', res.message)
 
-    start = time.time()
+    # start = time.time()
     C = set()
     for i, v in enumerate(res.x):
         if v >= 0.5:
             C.add(i + 1)
 
-    end = time.time()
-    total_time += (end - start)
-    print("Result time", total_time)
+    # end = time.time()
+    # total_time += (end - start)
+    # print("Result time", total_time)
 
     return res.fun, C
 
 
 if __name__ == '__main__':
     directory = 'tests'
-    # start = time.time()
-    # for filename in os.listdir(directory):
-    #     f = os.path.join(directory, filename)
-    #     # checking if it is a file
-    #     if os.path.isfile(f):
-    #         fo = open(f, "rb")
-    #         G = nx.read_edgelist(fo, nodetype=int)
-    #         fo.close()
-    #         a = nx.maximal_matching(G)
-    #         # naive = vc_naive_approach(G)
-    #         # greedy = vc_greedy_approach(G)
-    #         # apx2 = vc_2apx_approach(G)
-    #         lp = vc_lp_approach(G)
-    #         # print(filename, " ", str(len(naive)), str(len(greedy)), str(len(apx2)))
-    #         print(filename, " ", str(len(lp)))
-    #
-    #     # break
-    # end = time.time()
-    # print(end - start)
-
-    """
-         7
-         |
-         |
-    1----2----3----8
-    |    |
-    |    |
-    4----5
-    """
+    start = time.time()
+    print("{:<21}|{:>11} |{:>11} |{:>11} |{:>11} |{:>11}".format('name', 'lb', 'lp', 'naive', 'greedy', '2apx'))
+    for filename in sorted(os.listdir(directory)):
+        f = os.path.join(directory, filename)
+        # print(filename)
+        # continue
+        # checking if it is a file
+        if os.path.isfile(f):
+            fo = open(f, "rb")
+            G = nx.read_edgelist(fo, nodetype=int)
+            fo.close()
+            naive = vc_naive_approach(G)
+            greedy = vc_greedy_approach(G)
+            apx2 = vc_2apx_approach(G)
+            lb, lp = vc_lp_approach(G)
+            print("{:<21}|{:>11} |{:>11} |{:>11} |{:>11} |{:>11}".format(filename, lb, len(lp), len(naive), len(greedy),
+                                                                         len(apx2)))
+            del naive
+            del greedy
+            del apx2
+            del lp
+    end = time.time()
+    print("Execution time:", end - start)
 
     """
 
@@ -245,11 +231,16 @@ if __name__ == '__main__':
         4----5
     """
 
-    # filename = "tests/test.graph"
+    # filename = "tests/g02.graph"
     # f = open(filename, "rb")
     # G = nx.read_edgelist(f, nodetype=int)
     # f.close()
-    # print(vc_naive_approach(G))
-    # print((vc_greedy_approach(G)))
-    # print((vc_2apx_approach(G)))
-    # print(G.edges)
+    #
+    # naive = vc_naive_approach(G)
+    # greedy = vc_greedy_approach(G)
+    # apx2 = vc_2apx_approach(G)
+    # lb, lp = vc_lp_approach(G)
+    # print("{:<21}|{:>11} |{:>11} |{:>11} |{:>11} |{:>11}".format('name', 'lb', 'lp', 'naive', 'greedy', '2apx'))
+    # print(
+    #     "{:<21}|{:>11} |{:>11} |{:>11} |{:>11} |{:>11}".format(filename.replace('tests/', ''), lb, len(lp), len(naive),
+    #                                                            len(greedy), len(apx2)))
