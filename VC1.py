@@ -121,24 +121,111 @@ def vc_2apx_approach(G):
     return C
 
 
+def vc_lp_approach(G):
+    uncovered_edges = set(G.edges)
+
+    indptr_count = 0
+
+    # Lists storing necessary data for csr_matrix
+    indptr = [indptr_count]
+    indices = []
+    data = []
+
+    b_vector = []
+    c_vector = []
+
+    total_time = 0.0
+
+    while uncovered_edges:
+        start = time.time()
+
+        (u, v) = uncovered_edges.pop()
+
+        # x_u + x_v >= 1
+        data.extend([-1, -1])
+        indices.extend([u - 1, v - 1])
+        indptr_count += 2
+        indptr.append(indptr_count)
+        b_vector.append(-1)
+
+        end = time.time()
+        total_time += (end - start)
+
+    for vertex in G.nodes:
+        start = time.time()
+
+        # x >= 0
+        data.append(-1)
+        indices.append(vertex - 1)
+        indptr_count += 1
+        indptr.append(indptr_count)
+        b_vector.append(0)
+
+        # min: x_1 + x_2 +...+ x_n
+        c_vector.append(1)
+
+        end = time.time()
+        total_time += (end - start)
+
+    # print("Matrix generate time", total_time)
+
+    # print(csr_matrix((data, indices, indptr)).toarray())
+    start = time.time()
+    A = csr_matrix((data, indices, indptr)).toarray()
+    b = np.array(b_vector)
+    c = np.array(c_vector)
+    end = time.time()
+    total_time = (end - start)
+    # print("np arrays time", total_time)
+
+    # print(A)
+    # print(b)
+    # print(c)
+    # print()
+    start = time.time()
+    res = linprog(c, A_ub=A, b_ub=b)
+    end = time.time()
+    total_time += (end - start)
+    # print("LP time", total_time)
+    # print('Optimal value:', res.fun,
+    #       '\nx values:', res.x,
+    #       '\nNumber of iterations performed:', res.nit,
+    #       '\nStatus:', res.message)
+
+    start = time.time()
+    C = set()
+    for i, v in enumerate(res.x):
+        if v >= 0.5:
+            C.add(i + 1)
+
+    end = time.time()
+    total_time += (end - start)
+    print("Result time", total_time)
+
+    return res.fun, C
+
+
 if __name__ == '__main__':
     directory = 'tests'
-    start = time.time()
-    for filename in os.listdir(directory):
-        f = os.path.join(directory, filename)
-        # checking if it is a file
-        if os.path.isfile(f):
-            fo = open(f, "rb")
-            G = nx.read_edgelist(fo)
-            fo.close()
-            a = nx.maximal_matching(G)
-            naive = vc_naive_approach(G)
-            greedy = vc_greedy_approach(G)
-            apx2 = vc_2apx_approach(G)
-            print(filename, " ", str(len(naive)), str(len(greedy)), str(len(apx2)))
-        # break
-    end = time.time()
-    print(end - start)
+    # start = time.time()
+    # for filename in os.listdir(directory):
+    #     f = os.path.join(directory, filename)
+    #     # checking if it is a file
+    #     if os.path.isfile(f):
+    #         fo = open(f, "rb")
+    #         G = nx.read_edgelist(fo, nodetype=int)
+    #         fo.close()
+    #         a = nx.maximal_matching(G)
+    #         # naive = vc_naive_approach(G)
+    #         # greedy = vc_greedy_approach(G)
+    #         # apx2 = vc_2apx_approach(G)
+    #         lp = vc_lp_approach(G)
+    #         # print(filename, " ", str(len(naive)), str(len(greedy)), str(len(apx2)))
+    #         print(filename, " ", str(len(lp)))
+    #
+    #     # break
+    # end = time.time()
+    # print(end - start)
 
     """
          7
