@@ -128,11 +128,15 @@ def vc_lp_approach(G):
     c_vector = []
 
     # total_time = 0.0
-
+    max_vertex = 0
     while uncovered_edges:
         # start = time.time()
 
         (u, v) = uncovered_edges.pop()
+        # if u > len(G.nodes):
+        #     print("u", u, len(G.nodes))
+        # if v > len(G.nodes):
+        #     print("v", v, len(G.nodes))
 
         # x_u + x_v >= 1
         data.extend([-1, -1])
@@ -141,12 +145,15 @@ def vc_lp_approach(G):
         indptr.append(indptr_count)
         b_vector.append(-1)
 
+        max_vertex = max(max_vertex, u, v)
+
         # end = time.time()
         # total_time += (end - start)
-
+    # print(indptr_count)
     for vertex in G.nodes:
         # start = time.time()
-
+        # if vertex == 9876:
+        #     print("vertex", vertex)
         # x >= 0
         data.append(-1)
         indices.append(vertex - 1)
@@ -163,14 +170,16 @@ def vc_lp_approach(G):
     # print("Matrix generate time", total_time)
 
     # start = time.time()
-    A = csr_matrix((data, indices, indptr)).toarray()
+    A = csr_matrix((data, indices, indptr)).tocsr()
     b = np.array(b_vector)
     c = np.array(c_vector)
     # end = time.time()
     # total_time = (end - start)
     # print("np arrays time", total_time)
 
-    # print(A)
+    # print(A.get_shape)
+    # print(len(c))
+
     # print(b)
     # print(c)
     # print()
@@ -203,6 +212,8 @@ if __name__ == '__main__':
     print("{:<21}|{:>11} |{:>11} |{:>11} |{:>11} |{:>11}".format('name', 'lb', 'lp', 'naive', 'greedy', '2apx'))
     for filename in sorted(os.listdir(directory)):
         f = os.path.join(directory, filename)
+        # if filename == 'g13.graph':
+        #     continue
         # print(filename)
         # continue
         # checking if it is a file
@@ -231,7 +242,7 @@ if __name__ == '__main__':
         4----5
     """
 
-    # filename = "tests/g02.graph"
+    # filename = "tests/g13.graph"
     # f = open(filename, "rb")
     # G = nx.read_edgelist(f, nodetype=int)
     # f.close()
