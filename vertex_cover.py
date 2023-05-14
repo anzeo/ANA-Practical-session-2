@@ -29,35 +29,21 @@ def vc_greedy_approach(G):
 
     tmp_G = G.copy()  # Make a copy of graph so the original isn't changed
 
-    # start = time.time()
     vertices = dict()
     for vertex in G.nodes:
-        # vertices[vertex] = len(G.edges(vertex))
         adj_edge_count = len(G.edges(vertex))
         if adj_edge_count not in vertices:
             vertices[adj_edge_count] = set()
         vertices[adj_edge_count].add(vertex)
-    # end = time.time()
-    # print("Vertex time: ", end - start)
-    # print(max(vertices))
 
-    # totalMax = 0.0
-    # totalAdjacent = 0.0
-    # start = time.time()
     while uncovered_edges:
-        # start1 = time.time()
-
         max_adj_edge_count = max(vertices)  # Find set of vertices with most uncovered adjacent edges.
         max_vertex = vertices[max_adj_edge_count].pop()  # Select one of vertices with most uncovered adjacent edges.
         if not vertices[max_adj_edge_count]:
             del vertices[max_adj_edge_count]
-        # end1 = time.time()
-        # totalMax += (end1 - start1)
 
-        # print(max_vertex)
         C.add(max_vertex)
 
-        # start1 = time.time()
         for adjacent_edge in list(tmp_G.edges(max_vertex)):
             (u, v) = adjacent_edge
             adj_vertex = (u if u != max_vertex else v)
@@ -70,25 +56,14 @@ def vc_greedy_approach(G):
             if not vertices[adj_vertex_degree]:
                 del vertices[adj_vertex_degree]
 
-            # vertices[u] -= 1
-            # vertices[v] -= 1
-
             if (u, v) in uncovered_edges:
                 uncovered_edges.remove((u, v))
             if (v, u) in uncovered_edges:
                 uncovered_edges.remove((v, u))
             tmp_G.remove_edge(u, v)
 
-        # del vertices[max_vertex]
-        # end1 = time.time()
-        # totalAdjacent += (end1 - start1)
-
-    # end = time.time()
-    # print("Cover search time: ", end - start)
-    # print("Total max time: ", totalMax)
-    # print("Total adjacent time: ", totalAdjacent)
-
     return C
+
 
 # 2APX approach of solving the vertex cover problem
 def vc_2apx_approach(G):
@@ -119,16 +94,8 @@ def vc_lp_approach(G):
     b_vector = []
     c_vector = []
 
-    # total_time = 0.0
-    max_vertex = 0
     while uncovered_edges:
-        # start = time.time()
-
         (u, v) = uncovered_edges.pop()
-        # if u > len(G.nodes):
-        #     print("u", u, len(G.nodes))
-        # if v > len(G.nodes):
-        #     print("v", v, len(G.nodes))
 
         # x_u + x_v >= 1
         data.extend([-1, -1])
@@ -137,15 +104,7 @@ def vc_lp_approach(G):
         indptr.append(indptr_count)
         b_vector.append(-1)
 
-        max_vertex = max(max_vertex, u, v)
-
-        # end = time.time()
-        # total_time += (end - start)
-    # print(indptr_count)
     for vertex in G.nodes:
-        # start = time.time()
-        # if vertex == 9876:
-        #     print("vertex", vertex)
         # x >= 0
         data.append(-1)
         indices.append(vertex - 1)
@@ -156,75 +115,48 @@ def vc_lp_approach(G):
         # min: x_1 + x_2 +...+ x_n
         c_vector.append(1)
 
-        # end = time.time()
-        # total_time += (end - start)
-
-    # print("Matrix generate time", total_time)
-
-    # start = time.time()
     A = csr_matrix((data, indices, indptr)).tocsr()
     b = np.array(b_vector)
     c = np.array(c_vector)
-    # end = time.time()
-    # total_time = (end - start)
-    # print("np arrays time", total_time)
 
-    # print(A.get_shape)
-    # print(len(c))
-
-    # print(b)
-    # print(c)
-    # print()
-    # start = time.time()
     res = linprog(c, A_ub=A, b_ub=b)
-    # end = time.time()
-    # total_time = (end - start)
-    # print("LP time", total_time)
+
     # print('Optimal value:', res.fun,
     #       '\nx values:', res.x,
     #       '\nNumber of iterations performed:', res.nit,
     #       '\nStatus:', res.message)
 
-    # start = time.time()
     C = set()
     for i, v in enumerate(res.x):
         if v >= 0.5:
             C.add(i + 1)
-
-    # end = time.time()
-    # total_time += (end - start)
-    # print("Result time", total_time)
 
     return res.fun, C
 
 
 if __name__ == '__main__':
     directory = 'tests'
-    # start = time.time()
-    # print("{:<21}|{:>11} |{:>11} |{:>11} |{:>11} |{:>11}".format('name', 'lb', 'lp', 'naive', 'greedy', '2apx'))
-    # for filename in sorted(os.listdir(directory)):
-    #     f = os.path.join(directory, filename)
-    #     # if filename == 'g13.graph':
-    #     #     continue
-    #     # print(filename)
-    #     # continue
-    #     # checking if it is a file
-    #     if os.path.isfile(f):
-    #         fo = open(f, "rb")
-    #         G = nx.read_edgelist(fo, nodetype=int)
-    #         fo.close()
-    #         naive = vc_naive_approach(G)
-    #         greedy = vc_greedy_approach(G)
-    #         apx2 = vc_2apx_approach(G)
-    #         lb, lp = vc_lp_approach(G)
-    #         print("{:<21}|{:>11} |{:>11} |{:>11} |{:>11} |{:>11}".format(filename, lb, len(lp), len(naive), len(greedy),
-    #                                                                      len(apx2)))
-    #         del naive
-    #         del greedy
-    #         del apx2
-    #         del lp
-    # end = time.time()
-    # print("Execution time:", end - start)
+    start = time.time()
+    print("{:<21}|{:>11} |{:>11} |{:>11} |{:>11} |{:>11}".format('name', 'lb', 'lp', 'naive', 'greedy', '2apx'))
+    for filename in sorted(os.listdir(directory)):
+        f = os.path.join(directory, filename)
+        if os.path.isfile(f):
+            fo = open(f, "rb")
+            G = nx.read_edgelist(fo, nodetype=int)
+            G = nx.convert_node_labels_to_integers(G, 1)
+            fo.close()
+            naive = vc_naive_approach(G)
+            greedy = vc_greedy_approach(G)
+            apx2 = vc_2apx_approach(G)
+            lb, lp = vc_lp_approach(G)
+            print("{:<21}|{:>11} |{:>11} |{:>11} |{:>11} |{:>11}".format(filename, lb, len(lp), len(naive), len(greedy),
+                                                                         len(apx2)))
+            del naive
+            del greedy
+            del apx2
+            del lp
+    end = time.time()
+    print("Execution time:", end - start)
 
     """
 
@@ -234,17 +166,16 @@ if __name__ == '__main__':
         4----5
     """
 
-    filename = "tests/g01.graph"
-    f = open(filename, "rb")
-    G = nx.read_edgelist(f, nodetype=int)
-    f.close()
-
-    naive = vc_naive_approach(G)
-    greedy = vc_greedy_approach(G)
-    apx2 = vc_2apx_approach(G)
-    lb, lp = vc_lp_approach(G)
-    # print(lp)
-    print("{:<21}|{:>11} |{:>11} |{:>11} |{:>11} |{:>11}".format('name', 'lb', 'lp', 'naive', 'greedy', '2apx'))
-    print(
-        "{:<21}|{:>11} |{:>11} |{:>11} |{:>11} |{:>11}".format(filename.replace('tests/', ''), lb, len(lp), len(naive),
-                                                               len(greedy), len(apx2)))
+    # filename = "tests/g13.graph"
+    # f = open(filename, "rb")
+    # G = nx.read_edgelist(f, nodetype=int)
+    # f.close()
+    #
+    # naive = vc_naive_approach(G)
+    # greedy = vc_greedy_approach(G)
+    # apx2 = vc_2apx_approach(G)
+    # lb, lp = vc_lp_approach(G)
+    # print("{:<21}|{:>11} |{:>11} |{:>11} |{:>11} |{:>11}".format('name', 'lb', 'lp', 'naive', 'greedy', '2apx'))
+    # print(
+    #     "{:<21}|{:>11} |{:>11} |{:>11} |{:>11} |{:>11}".format(filename.replace('tests/', ''), lb, len(lp), len(naive),
+    #                                                            len(greedy), len(apx2)))
