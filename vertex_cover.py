@@ -92,7 +92,6 @@ def vc_lp_approach(G):
     data = []
 
     b_vector = []
-    c_vector = []
 
     while uncovered_edges:
         (u, v) = uncovered_edges.pop()
@@ -104,27 +103,17 @@ def vc_lp_approach(G):
         indptr.append(indptr_count)
         b_vector.append(-1)
 
-    for vertex in G.nodes:
-        # x >= 0
-        data.append(-1)
-        indices.append(vertex - 1)
-        indptr_count += 1
-        indptr.append(indptr_count)
-        b_vector.append(0)
-
-        # min: x_1 + x_2 +...+ x_n
-        c_vector.append(1)
+    # min: x_1 + x_2 +...+ x_n
+    c_vector = [1] * len(G.nodes)
 
     A = csr_matrix((data, indices, indptr)).tocsr()
     b = np.array(b_vector)
     c = np.array(c_vector)
 
-    res = linprog(c, A_ub=A, b_ub=b)
+    # x_i >= 0
+    bounds = np.array([(0, 1)] * len(G.nodes))
 
-    # print('Optimal value:', res.fun,
-    #       '\nx values:', res.x,
-    #       '\nNumber of iterations performed:', res.nit,
-    #       '\nStatus:', res.message)
+    res = linprog(c, A_ub=A, b_ub=b, bounds=bounds)
 
     C = set()
     for i, v in enumerate(res.x):
@@ -136,7 +125,7 @@ def vc_lp_approach(G):
 
 if __name__ == '__main__':
     directory = 'tests'
-    start = time.time()
+    # start = time.time()
     print("{:<21}|{:>11} |{:>11} |{:>11} |{:>11} |{:>11}".format('name', 'lb', 'lp', 'naive', 'greedy', '2apx'))
     for filename in sorted(os.listdir(directory)):
         f = os.path.join(directory, filename)
@@ -155,27 +144,5 @@ if __name__ == '__main__':
             del greedy
             del apx2
             del lp
-    end = time.time()
-    print("Execution time:", end - start)
-
-    """
-
-        1----2----3
-        |    |
-        |    |
-        4----5
-    """
-
-    # filename = "tests/g13.graph"
-    # f = open(filename, "rb")
-    # G = nx.read_edgelist(f, nodetype=int)
-    # f.close()
-    #
-    # naive = vc_naive_approach(G)
-    # greedy = vc_greedy_approach(G)
-    # apx2 = vc_2apx_approach(G)
-    # lb, lp = vc_lp_approach(G)
-    # print("{:<21}|{:>11} |{:>11} |{:>11} |{:>11} |{:>11}".format('name', 'lb', 'lp', 'naive', 'greedy', '2apx'))
-    # print(
-    #     "{:<21}|{:>11} |{:>11} |{:>11} |{:>11} |{:>11}".format(filename.replace('tests/', ''), lb, len(lp), len(naive),
-    #                                                            len(greedy), len(apx2)))
+    # end = time.time()
+    # print("Execution time:", end - start)
